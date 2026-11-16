@@ -15,7 +15,7 @@ images/       fotos (foto-1 a foto-4)
 movie/        video-1.mp4 (página 5) e poster-1.jpg (quadro de capa do vídeo)
 
 COMO PERSONALIZAR
-1. O cartão já está com o nome da Emily. Falta trocar só o "Seu nome" na última página do index.html.
+1. O cartão já está com o nome da Emily e a assinatura "Geilson" (última página do index.html).
 2. Edite os textos e as qualidades.
 3. Fotos: salve em images/ (ex.: foto-1.jpg) e troque o src. Use fotos verticais (4:5),
    com ~1200 px de largura e menos de 400 KB cada, para abrir rápido no celular.
@@ -28,7 +28,7 @@ EXTRAS
 - A dica "arraste" some depois da primeira virada. Respeita quem desativa animações no celular.
 
 VÍDEO (página "Gentil")
-- Toca sozinho e mudo ao chegar na página (regra dos celulares); tocar no vídeo pausa/retoma.
+- Toda vez que a página 5 abre, o vídeo recomeça e toca sozinho (mudo, regra dos celulares); ao sair, pausa. Tocar no vídeo pausa/retoma e, se o celular bloquear o início automático, aparece o botão ▶. Na página 6 só aparece o quadro do vídeo (poster).
 - O botão de som (#vsom no index.html) fica escondido (atributo hidden) enquanto o vídeo não tiver áudio. Com um vídeo que tenha som, apague o "hidden": o botão 🔇/🔊 liga o som e a música de fundo pausa enquanto isso.
 - Para trocar: salve como movie/video-1.mp4 (vertical, de preferência abaixo de 3 MB) e gere um novo movie/poster-1.jpg.
 

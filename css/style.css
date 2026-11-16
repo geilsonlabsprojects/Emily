@@ -220,3 +220,8 @@ body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;touch-ac
 .nav .ponto{position:relative;min-height:0}
 .nav .ponto::after{content:"";position:absolute;inset:-18px -4px}
 @media(orientation:landscape) and (max-height:520px){.cartao{display:none}body::after{content:"Vire o celular na vertical para abrir o cartão";color:#F2C14E;font:600 1.1rem var(--d);text-align:center;padding:24px}}
+
+/* botão ▶ (só aparece se o vídeo estiver parado na página 5) */
+.vplay{position:absolute;left:50%;top:50%;z-index:8;width:68px;height:68px;margin:-34px 0 0 -34px;padding:0 0 0 5px;border-radius:50%;border:1.5px solid rgba(255,227,163,.7);background:rgba(10,10,12,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#FFE3A3;font-size:1.5rem;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s}
+.pausado .vplay{opacity:1;pointer-events:auto}
+.vplay:focus-visible{outline:2px solid var(--lua);outline-offset:3px}

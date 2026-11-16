@@ -156,7 +156,8 @@
 
   // vídeo da página 5: começa mudo ao chegar, o som é por toque; a música de fundo pausa enquanto o vídeo fala
   var vd = document.getElementById('video'), vb = document.getElementById('vsom'), voltaMusica = false;
-  var calmo = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var vp = document.getElementById('vplay'), vf = vd.parentNode, naPag = false;
+  vd.muted = true;
   function tocaVideo() { var r = vd.play(); if (r && r.catch) r.catch(function () {}); }
   function vsom(on) {
     vd.muted = !on; vb.textContent = on ? '🔊' : '🔇'; vb.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -164,10 +165,17 @@
     if (on && tocando) { voltaMusica = true; musica(false); }
     if (!on && voltaMusica) { voltaMusica = false; musica(true); }
   }
+  // ao abrir a página 5 o vídeo recomeça e toca; ao sair, pausa. Se o celular bloquear, aparece o botão ▶
   function video() {
-    if (P[i].contains(vd) && !document.hidden) { if (!calmo) tocaVideo(); }
+    var pag = P[i].contains(vd);
+    if (pag && !document.hidden) { if (!naPag) vd.currentTime = 0; tocaVideo(); }
     else { vd.pause(); if (!vd.muted) vsom(false); }
+    naPag = pag;
   }
+  function estado() { vf.classList.toggle('pausado', vd.paused); }
+  ['play', 'playing', 'pause', 'ended'].forEach(function (ev) { vd.addEventListener(ev, estado); });
+  vp.addEventListener('click', tocaVideo);
+  estado();
   vb.addEventListener('click', function () { vsom(vd.muted); if (vd.paused) tocaVideo(); });
   document.addEventListener('visibilitychange', video);
 
