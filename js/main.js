@@ -39,6 +39,7 @@
       idx += Math.min(1, Math.abs(s.a / A));
     });
     astro.style.transform = 'translate(calc(' + (idx / (n - 1) * hw).toFixed(1) + 'px - 50%),-50%)';
+    c.style.setProperty('--r', (1 - idx / (n - 1)).toFixed(3)); c.style.setProperty('--l', (idx / (n - 1)).toFixed(3));
     rf = vivo ? requestAnimationFrame(gira) : 0;
   }
   function ui() {
@@ -243,6 +244,50 @@
     })();
   }
 
+  // sons da abertura (sintetizados, sem arquivos): pop por velinha subindo a escala, varredura mágica, acorde + estouro no "16"
+  var sx = null, sg = null;
+  function sxIni() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!sx) { sx = new AC(); sg = sx.createGain(); sg.gain.value = .55; sg.connect(sx.destination); }
+    sx.resume();
+  }
+  function tom(f, t, d, v, ty) {
+    var o = sx.createOscillator(), g = sx.createGain();
+    o.type = ty || 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(sg); o.start(t); o.stop(t + d + .05);
+  }
+  function ruido(t, d, v, f) {
+    var b = sx.createBuffer(1, Math.ceil(sx.sampleRate * d), sx.sampleRate), a = b.getChannelData(0);
+    for (var q = 0; q < a.length; q++) a[q] = (Math.random() * 2 - 1) * Math.pow(1 - q / a.length, 2);
+    var s = sx.createBufferSource(), fl = sx.createBiquadFilter(), g = sx.createGain();
+    s.buffer = b; fl.type = 'bandpass'; fl.frequency.value = f; fl.Q.value = .8; g.gain.value = v;
+    s.connect(fl); fl.connect(g); g.connect(sg); s.start(t);
+  }
+  function varre(t, d, f1, f2, v) {
+    var o = sx.createOscillator(), g = sx.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + d * .7); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(sg); o.start(t); o.stop(t + d + .05);
+  }
+  function som(f) { if (sx && sx.state === 'running') f(sx.currentTime + .02); }
+  function somVela(k) {
+    som(function (t) {
+      var m = 60 + [0, 2, 4, 7, 9][k % 5] + 12 * Math.floor(k / 5), f = 440 * Math.pow(2, (m - 69) / 12);
+      tom(f, t, .45, .16); tom(f * 2, t, .15, .04, 'triangle');
+    });
+  }
+  function somTitulo() { som(function (t) { tom(784, t, 1.2, .08, 'triangle'); tom(988, t + .12, 1.2, .07, 'triangle'); }); }
+  function somVarre() { som(function (t) { varre(t, 1.2, 250, 1800, .14); ruido(t, 1.2, .06, 3200); }); }
+  function somNum() {
+    som(function (t) {
+      ruido(t, .35, .4, 2500); tom(90, t, .3, .35);
+      [84, 88, 91, 96, 100].forEach(function (m, k) { tom(440 * Math.pow(2, (m - 69) / 12), t + .05 + k * .07, 1.6, .1, 'triangle'); });
+    });
+  }
+  function somEstouro() { som(function (t) { ruido(t, .3, .3, 2800); tom(70, t, .2, .2); }); }
+
   // abertura: bolo com velinhas até 16, bolo some, "16 anos" em confete; depois libera o cartão
   var ab = document.getElementById('abertura');
   function abertura() {
@@ -255,10 +300,16 @@
       T.forEach(clearTimeout); ab.classList.add('sai'); P[0].classList.add('on');
       setTimeout(function () { ab.remove(); abre = false; }, 950);
     }
-    em(150, function () { ab.classList.add('v1'); });
-    em(4800, function () { ab.classList.add('v2'); });
-    em(5400, function () { ab.classList.add('v3'); confete(.5); setTimeout(function () { confete(.5); }, 400); });
-    em(8400, solta);
+    var gate = document.getElementById('abrir'), ini = false;
+    function comeca() {
+      if (ini) return; ini = true; gate.hidden = true; sxIni();
+      em(150, function () { ab.classList.add('v1'); somTitulo(); });
+      for (var k = 0; k < 16; k++) (function (k) { em(1280 + k * 130, function () { somVela(k); }); })(k);
+      em(4800, function () { ab.classList.add('v2'); somVarre(); });
+      em(5400, function () { ab.classList.add('v3'); confete(.5); somNum(); setTimeout(function () { confete(.5); somEstouro(); }, 400); });
+      em(8400, solta);
+    }
+    gate.addEventListener('click', comeca);
     document.getElementById('pular').addEventListener('click', solta);
   }
 

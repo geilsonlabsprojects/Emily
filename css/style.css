@@ -10,7 +10,7 @@ img,video{display:block;width:100%;height:100%;object-fit:cover;pointer-events:n
 /* cartão: tela cheia no celular; moldura só no computador */
 .cartao{position:relative;width:100vw;height:100vh;height:100dvh;container-type:size;perspective:1800px;touch-action:none;user-select:none;-webkit-user-select:none;font-family:var(--t);color:#F6F1E4}
 .cartao>*{--u:min(1cqw,.5cqh);--nv:calc(env(safe-area-inset-bottom,0px) + 29*var(--u))}
-@media(min-width:701px) and (pointer:fine){.cartao{width:min(440px,100vw);height:min(860px,calc(100dvh - 40px));border-radius:3px 8px 8px 3px;box-shadow:3px 1px 0 #ECE7D9,6px 2px 0 #DCD6C4,0 30px 80px rgba(0,0,0,.7)}}
+@media(min-width:701px) and (pointer:fine){.cartao{width:min(440px,100vw);height:min(860px,calc(100dvh - 40px));border-radius:3px 8px 8px 3px;--r:1;--l:0;box-shadow:calc(var(--r)*4px) 1px 0 #ECE7D9,calc(var(--r)*8px) 2px 0 #DCD6C4,calc(var(--l)*-4px) 1px 0 #ECE7D9,calc(var(--l)*-8px) 2px 0 #DCD6C4,0 30px 80px rgba(0,0,0,.7)}}
 .cartao::before{content:"";position:absolute;inset:0 auto 0 0;width:26px;z-index:40;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,.08) 35%,rgba(255,255,255,.14) 50%,transparent 70%)}
 
 /* páginas */
@@ -156,10 +156,11 @@ video{object-position:50% 35%}
 .festa{bottom:calc(var(--nv) + 11*var(--u))}
 .astro.lua{background:transparent;box-shadow:none}
 .astro>.bolo,.astro>.n16{position:absolute;right:calc(1.9*var(--u));top:calc(2.9*var(--u));width:calc(22*var(--u));height:calc(16.3*var(--u));opacity:0;pointer-events:none;transform-origin:100% 0}
+.astro>.n16{right:calc(-6.1*var(--u));top:calc(-1.1*var(--u));width:calc(38*var(--u));height:calc(24.3*var(--u));transform-origin:50% 50%}
 .astro>.bolo{transform:translateY(calc(-4*var(--u))) scale(.7);transition:opacity .9s var(--suave),transform 1.1s var(--suave)}
 .astro.lua>.bolo{opacity:1;transform:none;transition-delay:.5s}
 .astro.num>.bolo{opacity:0;transform:scale(.8);transition-delay:0s;transition-duration:.9s}
-.astro>.n16{display:block;text-align:center;line-height:calc(16.3*var(--u));white-space:nowrap;font:calc(9*var(--u))/calc(16.3*var(--u)) var(--script);transform:translateY(calc(2*var(--u))) scale(.75);transition:opacity .9s var(--suave),transform 1.1s var(--mola)}
+.astro>.n16{display:block;text-align:center;line-height:calc(24.3*var(--u));white-space:nowrap;font:calc(9*var(--u))/calc(24.3*var(--u)) var(--script);transform:translateY(calc(2*var(--u))) scale(.75);transition:opacity .9s var(--suave),transform 1.1s var(--mola)}
 .astro.num>.n16{opacity:1;transform:none}
 .bolo{display:block;width:100%;height:100%;overflow:visible}
 .vela rect{transform-box:fill-box;transform-origin:50% 100%}
@@ -169,7 +170,7 @@ video{object-position:50% 35%}
 .astro.acesa .chama{opacity:1}
 
 /* abertura: título, bolo com 16 velinhas, bolo some em luz e "16 anos" sai em confete; só então libera o cartão */
-.abertura{position:absolute;inset:0;z-index:58;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(5*var(--u));padding:calc(env(safe-area-inset-top,0px) + 6*var(--u)) calc(7*var(--u)) calc(env(safe-area-inset-bottom,0px) + 16*var(--u));text-align:center;background:radial-gradient(70% 40% at 50% 58%,rgba(242,193,78,.2),#0000),#050506;transition:opacity .9s var(--suave);animation:solta .1s 16s forwards}
+.abertura{position:absolute;inset:0;z-index:58;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(5*var(--u));padding:calc(env(safe-area-inset-top,0px) + 6*var(--u)) calc(7*var(--u)) calc(env(safe-area-inset-bottom,0px) + 16*var(--u));text-align:center;background:radial-gradient(70% 40% at 50% 58%,rgba(242,193,78,.2),#0000),#050506;transition:opacity .9s var(--suave)}
 @keyframes solta{to{opacity:0;visibility:hidden;pointer-events:none}}
 .abertura.sai{opacity:0;pointer-events:none}
 .abertura h2{font-size:calc(14*var(--u));line-height:1.1;opacity:0;transform:translateY(calc(4*var(--u)));transition:opacity 1.4s var(--suave),transform 1.4s var(--suave)}
@@ -194,7 +195,7 @@ video{object-position:50% 35%}
 .n16g i{font-style:normal;font-size:calc(17*var(--u));line-height:1}
 .abertura.v3 .n16g{animation:pop 1.5s var(--mola) both}
 @keyframes pop{from{opacity:0;transform:translateY(calc(6*var(--u))) scale(.6)}40%{opacity:1}to{opacity:1;transform:none}}
-.pular{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 5*var(--u));transform:translateX(-50%);min-height:44px;padding:0 12px;font:600 max(14px,3.9*var(--u)) var(--d);color:var(--ouro);text-decoration:underline;text-underline-offset:4px;opacity:.8}
+.pular{z-index:3;position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 5*var(--u));transform:translateX(-50%);min-height:44px;padding:0 12px;font:600 max(14px,3.9*var(--u)) var(--d);color:var(--ouro);text-decoration:underline;text-underline-offset:4px;opacity:.8}
 
 /* ===== mais suavidade (v2): giro das páginas e bolinha são movidos por mola no JS; aqui ficam os ajustes de CSS ===== */
 .page{transition:none}
@@ -207,3 +208,10 @@ video{object-position:50% 35%}
 .som{transition:padding .5s var(--suave),gap .5s var(--suave),transform .25s var(--suave),opacity .35s}
 .cartao.tocou .som{width:auto;padding:0;gap:0}
 .cartao.tocou .som small{display:block;max-width:0;opacity:0}
+
+/* tela inicial da abertura: o toque libera o som (os navegadores bloqueiam áudio sem toque) */
+.abrir{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(5*var(--u))}
+.abrir[hidden]{display:none}
+.abrir span{font:calc(14*var(--u))/1.3 var(--script);padding:0 .25em .15em}
+.abrir small{font:600 max(14px,3.9*var(--u)) var(--d);color:var(--ouro);border:1.5px solid rgba(242,193,78,.6);border-radius:99px;padding:calc(2.4*var(--u)) calc(6*var(--u));animation:toque 1.8s ease-in-out infinite}
+@keyframes toque{50%{transform:scale(1.05);opacity:.7}}
