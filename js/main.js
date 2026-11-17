@@ -2,43 +2,72 @@
   var c = document.getElementById('cartao');
   var P = [].slice.call(c.querySelectorAll('.page'));
   var n = P.length, A = -112, i = 0;
-  var astro = document.getElementById('astro');
+  var astro = document.getElementById('astro'), nv = c.querySelector('.nav');
   var bv = document.getElementById('voltar'), bp = document.getElementById('proxima');
-  var x0 = null, dir = 0, al = null, W = 440, fim = false;
+  var x0 = null, dir = 0, al = null, W = 440, fim = false, abre = false;
 
   P.forEach(function (p, k) { p.style.zIndex = n - k; });
 
-  // gira uma página em torno da lombada; --s controla a sombra da dobra
-  function rot(el, deg, anim) {
-    el.style.transition = anim ? '' : 'none';
-    el.style.transform = 'rotateY(' + deg + 'deg)';
-    el.style.setProperty('--s', Math.sin(Math.min(1, Math.abs(deg / A)) * Math.PI).toFixed(3));
+  // páginas presas a uma mola amortecida: partida e chegada suaves, seguem o dedo com leve atraso e mantêm o impulso ao soltar.
+  // A sombra da dobra e a bolinha da linha acompanham o ângulo real a cada quadro (inclusive durante o arrasto).
+  var calmo = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var S = P.map(function () { return { a: 0, v: 0, to: 0, r: null }; }), arrasta = false, ak = -1, rf = 0, tq = 0;
+  var hz = c.querySelector('.horizonte'), hw = 0;
+  function medir() { hw = hz.offsetWidth; }
+  window.addEventListener('resize', medir);
+  function arranca() { if (!rf) { tq = performance.now(); rf = requestAnimationFrame(gira); } }
+  function gira(t) {
+    var dt = Math.max(.001, Math.min(.1, (t - tq) / 1000)), m = Math.ceil(dt / .01), h = dt / m, vivo = false, idx = 0;
+    tq = t;
+    P.forEach(function (el, k) {
+      var s = S[k], kk = arrasta && k === ak ? 600 : 26;
+      if (calmo || (Math.abs(s.to - s.a) < .4 && Math.abs(s.v) < 4)) {
+        s.a = s.to; s.v = 0; el.classList.toggle('longe', Math.abs(k - i) > 1);
+      } else {
+        for (var q = 0; q < m; q++) {
+          s.v += (kk * (s.to - s.a) - 2 * Math.sqrt(kk) * s.v) * h;
+          var na = s.a + s.v * h;
+          if (na > 0 || na < A) { na = Math.min(0, Math.max(A, na)); s.v = 0; }
+          s.a = na;
+        }
+        vivo = true;
+      }
+      if (s.a !== s.r) {
+        s.r = s.a; el.style.transform = 'rotateY(' + s.a.toFixed(2) + 'deg)';
+        el.style.setProperty('--dobra', Math.sin(Math.min(1, Math.abs(s.a / A)) * Math.PI).toFixed(3));
+      }
+      idx += Math.min(1, Math.abs(s.a / A));
+    });
+    astro.style.transform = 'translate(calc(' + (idx / (n - 1) * hw).toFixed(1) + 'px - 50%),-50%)';
+    rf = vivo ? requestAnimationFrame(gira) : 0;
   }
   function ui() {
     var pg = P[i], t = i / (n - 1);
     c.style.setProperty('--nav', pg.dataset.nav);
-    astro.style.left = (t * 100) + '%';
-    astro.style.bottom = (-7 + Math.sin(t * Math.PI) * 18) + 'px';
     astro.style.setProperty('--sol', pg.dataset.sol);
-    astro.classList.toggle('lua', i === n - 1);
+    astro.classList.toggle('lua', i === n - 1); nv.classList.toggle('fim', i === n - 1); ciclo(i === n - 1);
     bv.disabled = i === 0;
     if (D) D.forEach(function (d, k) { d.classList.toggle('at', k === i); });
     bp.textContent = i === n - 1 ? 'ler de novo' : 'próxima';
-    P.forEach(function (p, k) { p.classList.toggle('on', k === i); p.setAttribute('aria-hidden', k === i ? 'false' : 'true'); p.inert = k !== i; });
+    P.forEach(function (p, k) { p.classList.toggle('on', k === i); p.setAttribute('aria-hidden', k === i ? 'false' : 'true'); p.inert = k !== i; if (Math.abs(k - i) <= 1) p.classList.remove('longe'); });
     if (i > 0) c.classList.add('virou');
     if (vd) video();
     if (i === n - 1 && !fim) { fim = true; setTimeout(confete, 700); }
     if (i < n - 1) fim = false;
   }
   function go(k) {
+    if (abre) return;
     var ant = i; i = Math.max(0, Math.min(n - 1, k));
     if (i !== ant && navigator.vibrate) navigator.vibrate(6);
-    P.forEach(function (p, j) { rot(p, j < i ? A : 0, true); });
+    var f1 = -1; // só a página de cima precisa aparecer girando; as de baixo ficam escondidas (menos peso)
+    P.forEach(function (p, j) { var to = j < i ? A : 0; if (S[j].to !== to && f1 < 0) f1 = j; S[j].to = to; });
+    if (f1 >= 0) P[f1].classList.remove('longe');
+    arrasta = false; arranca();
     ui();
   }
 
   c.addEventListener('pointerdown', function (e) {
-    if (e.target.closest('button')) return;
+    if (abre || e.target.closest('button')) return;
     x0 = e.clientX; dir = 0; al = null; W = c.offsetWidth;
   });
   c.addEventListener('pointermove', function (e) {
@@ -46,16 +75,17 @@
     var dx = e.clientX - x0;
     if (!dir && Math.abs(dx) > 8) {
       dir = dx < 0 ? 1 : -1;
-      al = dir > 0 ? P[i] : P[i - 1];
+      ak = dir > 0 ? i : i - 1; al = P[ak];
       if (!al || (dir > 0 && i === n - 1)) { al = null; x0 = null; return; }
       c.setPointerCapture(e.pointerId);
     }
     if (!al) return;
     var p = Math.min(1, Math.abs(dx) / (W * 0.8));
-    rot(al, dir > 0 ? A * p : A * (1 - p), false);
+    S[ak].to = dir > 0 ? A * p : A * (1 - p); arrasta = true; arranca();
   });
   function soltar(e) {
     if (x0 === null) return;
+    arrasta = false;
     if (al) go(i + (Math.abs(e.clientX - x0) > W * 0.18 ? dir : 0));
     else if (e.type === 'pointerup' && Math.abs(e.clientX - x0) < 8) toque(e);
     x0 = null; al = null; dir = 0;
@@ -71,7 +101,7 @@
 
   bp.addEventListener('click', function () { go(i === n - 1 ? 0 : i + 1); });
   var fb = document.getElementById('festa');
-  if (fb) fb.addEventListener('click', confete);
+  if (fb) fb.addEventListener('click', function () { confete(); });
   bv.addEventListener('click', function () { go(i - 1); });
   window.addEventListener('keydown', function (e) {
     if (e.key === 'ArrowRight' || e.key === 'PageDown') go(i + 1);
@@ -83,21 +113,29 @@
   // confete leve em canvas (desligado com prefers-reduced-motion)
   var cv = document.getElementById('confete'), cx = cv.getContext('2d'), fl = [], raf = 0;
   var cores = ['#F2C14E', '#FFF1B0', '#B9822A', '#FFFFFF', '#E8D6A0', '#D4A02F'];
-  function confete() {
+  function confete(oy) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
-    cv.width = r.width * d; cv.height = r.height * d;
-    for (var k = 0; k < 110; k++) fl.push({ x: r.width / 2, y: r.height * 0.72, vx: (Math.random() - .5) * 15, vy: -Math.random() * 15 - 6, s: 5 + Math.random() * 6, a: Math.random() * 6, va: (Math.random() - .5) * .4, c: cores[k % cores.length] });
-    cancelAnimationFrame(raf);
-    (function quadro() {
+    var r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2), y0 = r.height * (typeof oy === 'number' ? oy : 0.72);
+    if (cv.width !== Math.round(r.width * d)) { cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); }
+    for (var k = 0; k < 90; k++) {
+      var an = -Math.PI / 2 + (Math.random() - .5) * 2.4, v = 300 + Math.random() * 520;
+      fl.push({ x: r.width / 2, y: y0, vx: Math.cos(an) * v, vy: Math.sin(an) * v, s: 5 + Math.random() * 6, a: Math.random() * 6, va: (Math.random() - .5) * 9, c: cores[k % cores.length], t: 0, w: Math.random() * 6 });
+    }
+    if (raf) return;
+    var t0 = performance.now();
+    // física por tempo (não por quadro): mesma suavidade em telas de 60 e 120 Hz; cai devagar e some aos poucos
+    raf = requestAnimationFrame(function quadro(t) {
+      var dt = Math.max(0, Math.min(.034, (t - t0) / 1000)); t0 = t;
       cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, r.width, r.height);
-      fl = fl.filter(function (f) { return f.y < r.height + 20; });
+      fl = fl.filter(function (f) { return f.t < 4 && f.y < r.height + 30; });
       fl.forEach(function (f) {
-        f.vy += .35; f.vx *= .99; f.x += f.vx; f.y += f.vy; f.a += f.va;
-        cx.save(); cx.translate(f.x, f.y); cx.rotate(f.a); cx.fillStyle = f.c; cx.fillRect(-f.s / 2, -f.s / 4, f.s, f.s / 2); cx.restore();
+        f.t += dt; f.vx *= Math.pow(.2, dt); if (f.vy < 0) f.vy *= Math.pow(.25, dt);
+        f.vy = Math.min(f.vy + 760 * dt, 230);
+        f.x += (f.vx + Math.sin(f.t * 3 + f.w) * 26) * dt; f.y += f.vy * dt; f.a += f.va * dt;
+        cx.save(); cx.globalAlpha = Math.max(0, Math.min(1, (4 - f.t) * 1.2)); cx.translate(f.x, f.y); cx.rotate(f.a); cx.fillStyle = f.c; cx.fillRect(-f.s / 2, -f.s / 4, f.s, f.s / 2); cx.restore();
       });
-      if (fl.length) raf = requestAnimationFrame(quadro);
-    })();
+      if (fl.length) raf = requestAnimationFrame(quadro); else { raf = 0; cx.clearRect(0, 0, r.width, r.height); }
+    });
   }
 
   // pontos: ir direto a uma página
@@ -179,5 +217,58 @@
   vb.addEventListener('click', function () { vsom(vd.muted); if (vd.paused) tocaVideo(); });
   document.addEventListener('visibilitychange', video);
 
-  go(0);
+  // bolo de aniversário (SVG) com m velinhas: usado na abertura (16) e no fim da linha (5)
+  var CV = ['#FFF6DC', '#F2C14E', '#3b3b3f'], cb = false, tb = [];
+  function bolo(m) {
+    var v = '';
+    for (var k = 0; k < m; k++) {
+      var x = m === 1 ? 50 : 22 + k * 56 / (m - 1);
+      v += '<g class="vela" transform="translate(' + x.toFixed(1) + ' 0)" style="--k:' + k + '"><rect x="-1.4" y="22" width="2.8" height="18" rx="1" fill="' + CV[k % 3] + '"/><path class="chama" d="M0 21c-2.4-2.4-2-5.2 0-8.5 2 3.3 2.4 6.1 0 8.5z"/></g>';
+    }
+    return '<svg class="bolo" viewBox="0 0 100 74" aria-hidden="true"><ellipse cx="50" cy="68" rx="47" ry="5" fill="#B9822A"/><rect x="12" y="38" width="76" height="28" rx="6" fill="#E1B544"/>' + v +
+      '<path d="M12 44a6 6 0 0 1 6-6h64a6 6 0 0 1 6 6v3c-5 0-5 7-10 7s-5-6-10-6s-5 8-10 8s-5-7-10-7s-5 7-10 7s-5-8-10-8s-5 6-10 6h-6z" fill="#FFF6DC"/></svg>';
+  }
+  // fim da linha: bolo apagado, velinhas acendem, vira "16 anos", volta a ser bolo, repete
+  astro.innerHTML = bolo(5) + '<span class="n16 ouro">16 anos</span>';
+  function ciclo(on) {
+    if (on === cb) return;
+    cb = on; tb.forEach(clearTimeout); tb = [];
+    astro.classList.remove('acesa', 'num');
+    if (!on) return;
+    (function volta() {
+      tb.push(setTimeout(function () { astro.classList.add('acesa'); }, 1300));
+      tb.push(setTimeout(function () { astro.classList.add('num'); }, 4800));
+      tb.push(setTimeout(function () { astro.classList.remove('num', 'acesa'); }, 8000));
+      tb.push(setTimeout(volta, 8000));
+    })();
+  }
+
+  // abertura: bolo com velinhas até 16, bolo some, "16 anos" em confete; depois libera o cartão
+  var ab = document.getElementById('abertura');
+  function abertura() {
+    if (!ab) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { ab.remove(); abre = false; P[0].classList.add('on'); return; }
+    document.getElementById('bolo-g').innerHTML = bolo(16);
+    var T = [];
+    function em(ms, f) { T.push(setTimeout(f, ms)); }
+    function solta() {
+      T.forEach(clearTimeout); ab.classList.add('sai'); P[0].classList.add('on');
+      setTimeout(function () { ab.remove(); abre = false; }, 950);
+    }
+    em(150, function () { ab.classList.add('v1'); });
+    em(4800, function () { ab.classList.add('v2'); });
+    em(5400, function () { ab.classList.add('v3'); confete(.5); setTimeout(function () { confete(.5); }, 400); });
+    em(8400, solta);
+    document.getElementById('pular').addEventListener('click', solta);
+  }
+
+  medir(); go(0);
+  [].forEach.call(c.querySelectorAll('img'), function (im) { if (im.decode) im.decode().catch(function () {}); });
+  if (ab) { abre = true; P[0].classList.remove('on'); }
+  // espera as fontes (evita o título "pular" de uma fonte para outra) e então começa a abertura
+  (function pronto(f) {
+    var ok = false, vai = function () { if (!ok) { ok = true; f(); } };
+    setTimeout(vai, 1600);
+    if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('1em "Kaushan Script"'), document.fonts.load('1em Newsreader')]).then(vai, vai); else vai();
+  })(abertura);
 })();

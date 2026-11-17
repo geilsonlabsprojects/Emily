@@ -48,3 +48,23 @@ QR CODE NO CARTÃO IMPRESSO
 - Código escuro sobre fundo claro e liso; nunca sobre foto ou textura.
 - Exporte em SVG ou PNG de alta resolução, sem esticar.
 - Imprima um teste e leia com mais de um celular antes de imprimir o definitivo.
+
+VERSÃO MELHORADA PARA CELULAR
+- O cartão agora ocupa a tela inteira no celular e tudo escala pela unidade --u (início do style.css), sem caixa fixa de 440x800.
+- Fotos e textos não invadem mais a navegação; a bolinha anda sobre a linha e, na última página, vira a lua que desce.
+- Corrigido: a variável --s (dobra da página) conflitava com a fonte cursiva dos títulos; agora são --dobra e --script.
+- Páginas distantes ficam ocultas (visibility) para o celular travar menos.
+
+ABERTURA E BOLO (idade 16)
+- Ao abrir o site: "Feliz aniversário", bolo, velinhas aparecem até 16, o bolo some e "16 anos" estoura em confete (~8 s). O cartão só libera depois; o botão "pular" encerra antes. Quem desativa animações no celular vai direto ao cartão.
+- Na última página, no fim da linha, um bolo pequeno (5 velinhas) acende, vira "16 anos", volta a ser bolo e repete.
+- Tempos da abertura: função abertura() em js/main.js (em(150..8000)); do bolo da linha: função ciclo(). Visual: seção "abertura" no fim de css/style.css.
+
+SUAVIDADE
+- Só transform e opacity se movem (rodam na placa de vídeo); sem blur/backdrop em movimento. Curvas no início do style.css (--suave, --vai, --mola).
+- Confete com física por tempo (mesma suavidade em 60 e 120 Hz). A abertura espera as fontes carregarem antes de começar.
+
+SUAVIDADE (v2)
+- O giro das páginas agora é uma mola amortecida no JS (função gira(): 26 = solta, 600 = arrastando). Menor = giro mais lento e macio; maior = mais rápido.
+- A sombra da dobra e a bolinha da linha acompanham o ângulo real da página, inclusive enquanto o dedo arrasta. A página só some depois de terminar o giro.
+- Botão de música, dica "arraste" e abertura também ganharam transições mais macias.
